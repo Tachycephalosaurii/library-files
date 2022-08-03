@@ -193,12 +193,11 @@ new Processing(${canvas}.canvas, function(processingInstance) {
 
     // once Processing.js is initialized, run the code
     if (pjsEnv.run) {
-        var pjsE = pjsEnv;
-        pjsE.loadLib = setInterval(function() {
+        pjsEnv.loadLib = setInterval(function() {
             if (typeof Processing !== "undefined") {
-                document.body.appendChild(pjsE.run);
+                document.body.appendChild(pjsEnv.run);
                 console.log("PJS Initialized");
-                clearInterval(pjsE.loadLib);
+                clearInterval(pjsEnv.loadLib);
             } else {
                 console.log("Awaiting PJS Initialization. . .");
             }
