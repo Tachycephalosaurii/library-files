@@ -28,10 +28,14 @@
     Before a program is run, its thumbnail is shown
     This allows for perfect UI images and graphics
     
-    The same format as createPJS, however the first parameter is a url and I've added more options
     Programs that use createPJS _shouldn't_ be affected... but if they do tell me
-    Layout:
+    
+    I moved the code parameter into the options object and you can now chain programs like:
+    sketch({...options}, {...}, {...});
+    
+    Options Layout:
         {
+            url: <KA_PROGRAM_LINK>
             canvas: <ELEMENT_ID | HTML_CANVAS_ELEMENT>
             ...
             every: <CLASS_NAME>
@@ -43,8 +47,9 @@
         If you pass a class name into this property, the script will apply the program to the canvases with it
     options.once
         This property is automatically true, which means the program will only run live on the first canvas
-        If canvas is set, it is the live canvas
-        Otherwise it is the first element with the class name
+        If you set it to false, every canvas will be live
+        If canvas is set, it is the first canvas
+        Otherwise the first canvas is the first element with the class name
     options.onload
         A callback function that runs when the program has initialized
         This is the exact time the thumbnails are replaced
@@ -233,7 +238,8 @@ new Processing(${canvas}.canvas, function(processingInstance) {
 }
 createPJS();
 
-function sketch(url, options) {
+function sketch(...sketches) {
+    var options = sketches.shift();
     // only have one live canvas
     if (typeof options.once === 'undefined') options.once = 1;
 
@@ -246,7 +252,6 @@ function sketch(url, options) {
         options.every = document.getElementById(options.every);
     }
     if (options.every) {
-        /* Run program on every canvas with the class */
         cvs = [...options.every];
         if (options.canvas) cvs.unshift(options.canvas);
         else options.canvas = cvs[0];
@@ -258,9 +263,8 @@ function sketch(url, options) {
     for (var i = 0; i < cvs.length; i++) {
         if (options.width) cvs[i].width = options.width;
         if (options.height) cvs[i].height = options.height;
-        cvs[i].style.background = `url(${url.replace('/cs/', '/computer-programming/')}/latest.png) center center / 100% 100% no-repeat`;
+        cvs[i].style.background = `url(${options.url.replace('/cs/', '/computer-programming/')}/latest.png) center center / 100% 100% no-repeat`;
     }
-
 
     // import jQuery if its not already imported
     if (!window.$) {
@@ -272,11 +276,10 @@ function sketch(url, options) {
     
     // get code
     $.getJSON(
-        'https://www.khanacademy.org/api/internal/scratchpads/' + url.split('/')[5] + '?callback=?',
+        'https://www.khanacademy.org/api/internal/scratchpads/' + options.url.split('/')[5] + '?callback=?',
         function(data) {
             options.instances = [];
             for (var i = options.once || cvs.length; i--;) {
-                // 
                 cvs[i].onload = function() {
                     if (options.once) {
                         for (var i = 0; i < cvs.length; i++) {
@@ -295,9 +298,9 @@ function sketch(url, options) {
                 
                 //create program
                 options.canvas = cvs[i];
-                options.url = url;
                 options.instances[i] = createPJS(data.revision.code, options);
             }
         }
     );
+    if (sketches.length) sketch.apply(this, sketches);
 }
